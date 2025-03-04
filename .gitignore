@@ -14,3 +14,7 @@ data/
 
 # Plots
 plots/
+
+# MLflow
+mlartifacts/
+mlruns/

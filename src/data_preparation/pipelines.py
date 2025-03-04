@@ -1,4 +1,4 @@
-from transformers import RankingTransformer, RollingStatsTransformer, RandomizeTeamsTransformer
+from src.data_preparation.transformers import RankingTransformer, RollingStatsTransformer, RandomizeTeamsTransformer
 from sklearn.pipeline import Pipeline
 
 feature_pipeline = Pipeline([
@@ -8,11 +8,11 @@ feature_pipeline = Pipeline([
 ])
 
 if __name__ == '__main__':
-    from dataloader import load_dataset
+    from src.data_preparation.dataloader import load_raw_dataset
     
     # Load 2024 men's basketball data
     print("Loading data...")
-    data = load_dataset(men=True, year=2024)
+    data = load_raw_dataset(men=True, year=2024)
     
     # Apply the pipeline transformations
     print("Applying feature pipeline...")

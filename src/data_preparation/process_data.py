@@ -1,8 +1,11 @@
 import argparse
 from pathlib import Path
-from dataloader import load_dataset
+from dataloader import load_raw_dataset
 from transformers import RankingTransformer, RollingStatsTransformer
 from sklearn.pipeline import Pipeline
+
+def load_processed_data(year: int, men: bool = True, ranking_system: str = 'SEL', n_games: int = 5):
+
 
 def process_data(year: int, men: bool = True, ranking_system: str = 'SEL', n_games: int = 5):
     """
@@ -17,7 +20,7 @@ def process_data(year: int, men: bool = True, ranking_system: str = 'SEL', n_gam
     print(f"Loading {'men''s' if men else 'women''s'} basketball data for {year}...")
     
     # Load the data
-    data = load_dataset(men=men, year=year)
+    data = load_raw_dataset(men=men, year=year)
     print(data.keys())
     # Import and configure the pipeline
     from pipelines import feature_pipeline

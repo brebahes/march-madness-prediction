@@ -29,7 +29,7 @@ class RankingTransformer(BaseEstimator, TransformerMixin):
         Returns:
             DataFrame: Game results merged with team rankings for both winning and losing teams
         """
-        from helpers import process_rankings, merge_with_latest_ranking
+        from src.data_preparation.helpers import process_rankings, merge_with_latest_ranking
         
         rankings_df = X[self.RANKINGS]
         games_df = X[self.GAMES]
@@ -73,7 +73,7 @@ class RollingStatsTransformer(BaseEstimator, TransformerMixin):
         """
         X should be a DataFrame with game data and rankings
         """
-        from helpers import calculate_rolling_stats, merge_rolling_stats
+        from src.data_preparation.  helpers import calculate_rolling_stats, merge_rolling_stats
         
         # Calculate rolling stats
         rolling_stats = calculate_rolling_stats(X, self.n_games)
