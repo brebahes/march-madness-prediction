@@ -47,7 +47,10 @@ def process_rankings(rankings_df, ranking_system=None):
     if ranking_system:
         if isinstance(ranking_system, str):
             # Filter for specific ranking system
-            processed_rankings = rankings_df[rankings_df['SystemName'] == ranking_system].copy()
+            processed_rankings = rankings_df[rankings_df['SystemName'] == ranking_system].copy()           
+            # Check if any rankings were found for the specified system
+            if processed_rankings.empty:
+                raise ValueError(f"No rankings found for system '{ranking_system}'")
         else:
             # Filter for list of systems and calculate median
             filtered_rankings = rankings_df[rankings_df['SystemName'].isin(ranking_system)]
