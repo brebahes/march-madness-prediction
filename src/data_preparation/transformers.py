@@ -38,27 +38,10 @@ class RankingTransformer(BaseEstimator, TransformerMixin):
         rankings_processed = process_rankings(rankings_df, self.ranking_system)
         
         # Merge rankings for both teams
-        w_rankings = merge_with_latest_ranking(
-            games_df, 
-            rankings_processed,
-            'WTeamID'
-        ).rename(columns={'OrdinalRank': 'WTeamRank'})
+        w_rankings = merge_with_latest_ranking(games_df, rankings_processed,'WTeamID','WTeamRank')
+        all_rankings = merge_with_latest_ranking(w_rankings, rankings_processed, 'LTeamID', 'LTeamRank')
         
-        l_rankings = merge_with_latest_ranking(
-            games_df, 
-            rankings_processed,
-            'LTeamID'
-        ).rename(columns={'OrdinalRank': 'LTeamRank'})
-        
-        # Combine rankings
-        games_with_rankings = pd.merge(
-            w_rankings,
-            l_rankings[['Season', 'DayNum', 'LTeamID', 'LTeamRank', 'RankingDayNum']],
-            on=['Season', 'DayNum', 'LTeamID'],
-            suffixes=('_winner', '_loser')
-        )
-        
-        return games_with_rankings
+        return all_rankings
 
 class RollingStatsTransformer(BaseEstimator, TransformerMixin):
     """Transform game data into rolling statistics features"""

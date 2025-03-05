@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def merge_with_latest_ranking(game_data, rank_data, team_id_col):
+def merge_with_latest_ranking(game_data, rank_data, team_id_col, new_col_name='Rank'):
     """
     Merges game data with rankings using the most recent available ranking before each game
     
@@ -9,7 +9,7 @@ def merge_with_latest_ranking(game_data, rank_data, team_id_col):
         game_data: DataFrame with game results
         rank_data: DataFrame with rankings
         team_id_col: Column name for team ID in game data
-        
+        new_col_name: Name for the new column in the merged DataFrame (default is 'Rank')
     Returns:
         DataFrame: Merged data with most recent rankings before each game
     """
@@ -30,6 +30,9 @@ def merge_with_latest_ranking(game_data, rank_data, team_id_col):
         ['Season', 'DayNum', team_id_col]
     ).last().reset_index()
     
+    merged = merged.drop(columns=['RankingDayNum', 'TeamID', 'SystemName'])
+    merged = merged.rename(columns={'OrdinalRank': new_col_name})
+
     return merged
 
 def process_rankings(rankings_df, ranking_system=None):
