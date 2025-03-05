@@ -7,7 +7,12 @@ In this repository all the code used to generate predictions for the March Madne
 
 Work in progress
 
-## Roadmap
+## Next steps
 
-- [ ] Training and testing a model in different years
-- [ ] Implement MLFlow for experiment tracking
+- [x] Training and testing a model in different years
+- [x] Implement MLFlow for experiment tracking
+= [ ] Combine the games data and the seedings going into the tournament
+- [ ] Create a bracket to visually represent the predicted vs actual results of the NCAA tournament
+- [ ] Test a modified version of the ranking, to give more weight to rankings close to 1
+- [ ] Create a study to see which ranking performs the best (or which combination of rankings)
+- [ ] Better way to log experiments into MLFlow
