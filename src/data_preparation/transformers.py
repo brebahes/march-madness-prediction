@@ -114,9 +114,14 @@ class RandomizeTeamsTransformer(BaseEstimator, TransformerMixin):
         # Make copy to avoid modifying original
         X_random = X.copy()
 
-        # Rename the W/L columns to A and B
-        X_random.rename(columns=lambda x: x.replace('W', 'A').replace('L', 'B'), inplace=True)
-        
+        # Rename columns that start with W or L to A or B respectively
+        new_columns = {}
+        for col in X_random.columns:
+            if col.startswith('W'):
+                new_columns[col] = 'A_' + col[1:]  # Replace first W with A
+            elif col.startswith('L'):
+                new_columns[col] = 'B_' + col[1:]  # Replace first L with B
+        X_random.rename(columns=new_columns, inplace=True)
         # Add a column with a random boolean value
         X_random['TeamA_wins'] = self.rng.rand(len(X_random)) > 0.5
 
@@ -126,8 +131,14 @@ class RandomizeTeamsTransformer(BaseEstimator, TransformerMixin):
         # Slice the dataframe where TeamA_wins is False
         X_random_team_b_wins = X_random[X_random['TeamA_wins'] == False]
         
-        # For the TeamB_wins dataframe, switch A and B
-        X_random_team_b_wins.rename(columns=lambda x: x.replace('A', 'temp').replace('B', 'A').replace('temp', 'B') if x.startswith(('A', 'B', 'temp')) else x, inplace=True)
+        # For rows where TeamB wins, swap A and B prefixes
+        a_cols = [col for col in X_random_team_b_wins.columns if col.startswith('A')]
+        b_cols = [col for col in X_random_team_b_wins.columns if col.startswith('B')]
+        rename_dict = {
+            **{a_col: 'B' + a_col[1:] for a_col in a_cols},
+            **{b_col: 'A' + b_col[1:] for b_col in b_cols}
+        }
+        X_random_team_b_wins.rename(columns=rename_dict, inplace=True)
 
         # Concatenate the two dataframes
         X_random = pd.concat([X_random_team_a_wins, X_random_team_b_wins])

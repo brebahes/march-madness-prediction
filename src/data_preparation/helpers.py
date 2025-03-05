@@ -83,17 +83,19 @@ def calculate_rolling_stats(games_df, n_games=5):
     """
     # List of statistical columns to compute rolling averages
     score_cols = ['Score', 'FGM', 'FGA', 'FGM3', 'FGA3', 'FTM', 'FTA', 
-                  'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk']
+                  'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
     
     # Create separate dataframes for winning and losing teams
     winners = games_df[[f'W{col}' for col in score_cols] + 
                       ['Season', 'DayNum', 'WTeamID']].copy()
     winners.columns = score_cols + ['Season', 'DayNum', 'TeamID']
+    winners['Win'] = True
     
     losers = games_df[[f'L{col}' for col in score_cols] + 
                       ['Season', 'DayNum', 'LTeamID']].copy()
     losers.columns = score_cols + ['Season', 'DayNum', 'TeamID']
-    
+    losers['Win'] = False
+
     # Combine all games and sort by date
     all_games = pd.concat([winners, losers])
     all_games = all_games.sort_values(['Season', 'DayNum'])
@@ -101,20 +103,22 @@ def calculate_rolling_stats(games_df, n_games=5):
     # Calculate rolling averages
     rolling_stats = pd.DataFrame()
     
+    # TODO: Probably can do this with a groupby
     for team in all_games['TeamID'].unique():
         team_games = all_games[all_games['TeamID'] == team].copy()
-        
         # Calculate rolling stats for each statistical column
         for col in score_cols:
-            team_games[f'Roll{col}'] = team_games[col].rolling(
+            team_games[f'Roll_{col}'] = team_games[col].shift().rolling(
                 window=n_games, min_periods=1).mean()
-            
+        # Calculate rolling win percentage for each team
+        team_games['Roll_WinPct'] = team_games['Win'].shift().rolling(
+            window=n_games, min_periods=1).mean()
         # Add additional derived statistics
-        team_games['RollFGPct'] = team_games['RollFGM'] / team_games['RollFGA']
-        team_games['RollFG3Pct'] = team_games['RollFGM3'] / team_games['RollFGA3']
-        team_games['RollFTPct'] = team_games['RollFTM'] / team_games['RollFTA']
-        team_games['RollTRB'] = team_games['RollOR'] + team_games['RollDR']  # Total rebounds
-        
+        team_games['Roll_FGPct'] = team_games['Roll_FGM'] / team_games['Roll_FGA']
+        team_games['Roll_FG3Pct'] = team_games['Roll_FGM3'] / team_games['Roll_FGA3']
+        team_games['Roll_FTPct'] = team_games['Roll_FTM'] / team_games['Roll_FTA']
+        team_games['Roll_TRB'] = team_games['Roll_OR'] + team_games['Roll_DR']  # Total rebounds
+    
         rolling_stats = pd.concat([rolling_stats, team_games])
     
     # Keep only rolling statistics and identifiers
@@ -142,4 +146,4 @@ def merge_rolling_stats(game_data, rolling_stats, team_id_col):
         left_on=['Season', 'DayNum', team_id_col],
         right_on=['Season', 'DayNum', 'TeamID'],
         how='left'
-    )
+    ).drop(columns=['TeamID'])
