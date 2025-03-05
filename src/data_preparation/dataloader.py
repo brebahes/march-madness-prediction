@@ -171,7 +171,9 @@ def combine_season_results(data_files: dict) -> pd.DataFrame:
     # Combine detailed results if available
     if reg_season_detailed and tourney_detailed:
         reg_season_df = data_files[reg_season_detailed]
+        reg_season_df['NCAA_Tournament'] = False
         tourney_df = data_files[tourney_detailed]
+        tourney_df['NCAA_Tournament'] = True
         detailed_results = pd.concat([reg_season_df, tourney_df], ignore_index=True)
         data_files['CombinedDetailedResults'] = detailed_results
         del data_files[reg_season_detailed]
@@ -180,7 +182,9 @@ def combine_season_results(data_files: dict) -> pd.DataFrame:
     # Combine compact results if available 
     if reg_season_compact and tourney_compact:
         reg_season_df = data_files[reg_season_compact]
+        reg_season_df['NCAA_Tournament'] = False
         tourney_df = data_files[tourney_compact]
+        tourney_df['NCAA_Tournament'] = True
         compact_results = pd.concat([reg_season_df, tourney_df], ignore_index=True)
         data_files['CombinedCompactResults'] = compact_results
         del data_files[reg_season_compact]
