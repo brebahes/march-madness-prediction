@@ -23,9 +23,9 @@ class RankingTransformer(BaseEstimator, TransformerMixin):
         Transform the input data by merging games data with rankings.
         
         Args:
-            X (dict): Dictionary containing the rankings (MasseyOrdinals) and games data 
+            X (dict): Dictionary containing the rankings (MasseyOrdinals) and games data
                      (NCAATourneyDetailedResults or NCAATourneyCompactResults)
-        
+
         Returns:
             DataFrame: Game results merged with team rankings for both winning and losing teams
         """
@@ -144,3 +144,80 @@ class RandomizeTeamsTransformer(BaseEstimator, TransformerMixin):
         X_random = pd.concat([X_random_team_a_wins, X_random_team_b_wins])
         
         return X_random
+
+class TournamentSlotTransformer(BaseEstimator, TransformerMixin):
+    """Combines tournament seeds and assigns tournament slots to games"""
+    
+    def __init__(self):
+        self.SEEDS = 'NCAATourneySeeds'
+        self.GAMES = 'CombinedDetailedResults'
+        self.SLOTS = 'NCAATourneySlots'
+    
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X):
+        """
+        Transform the input data by adding tournament seeds and slots.
+        
+        Args:
+            X (dict): Dictionary containing the tournament seeds (NCAATourneySeeds) 
+                     and games data (CombinedDetailedResults)
+        
+        Returns:
+            DataFrame: Game results with tournament seeds and slots added
+        """
+        seeds_df = X[self.SEEDS]
+        games_df = X[self.GAMES]
+        slots_df = X[self.SLOTS]
+
+
+        games_df = games_df.loc[games_df['NCAA_Tournament']==True]
+        # Merge seeds for winning teams
+        games_df = pd.merge(games_df, seeds_df, 
+                          left_on=['Season', 'WTeamID'],
+                          right_on=['Season', 'TeamID'],
+                          how='left').rename(columns={'Seed': 'WSeed'}).drop(columns=['TeamID'])
+        # Merge seeds for losing teams 
+        games_df = pd.merge(games_df, seeds_df,
+                          left_on=['Season', 'LTeamID'], 
+                          right_on=['Season', 'TeamID'],
+                          how='left').rename(columns={'Seed': 'LSeed'}).drop(columns=['TeamID'])
+
+        # Split into Conference and Seed number
+        games_df['WConference'] = games_df['WSeed'].astype(str).str[0]
+        games_df['WSeed'] = games_df['WSeed'].astype(str).str[1:]
+
+
+        games_df['LConference'] = games_df['LSeed'].astype(str).str[0]
+        games_df['LSeed'] = games_df['LSeed'].astype(str).str[1:]
+
+        first_four_index = np.logical_and(games_df['WSeed'].str.contains('a|b'), games_df['LSeed'].str.contains('a|b'))
+        first_four = games_df.loc[first_four_index]
+        main_tourney = games_df.loc[~first_four_index]
+
+        # Get the round number
+        first_four['Round'] = 0
+        main_tourney = main_tourney.sort_values(by=['WTeamID','DayNum'])
+        main_tourney['Round'] = main_tourney.groupby(by=['WTeamID']).cumcount() + 1
+
+        games_df = pd.concat([first_four, main_tourney])
+
+        # Sort by round
+        games_df = games_df.sort_values(by='DayNum')
+
+        # Create a new column 'Region' based on comparing winning and losing team regions
+        games_df['Conference'] = np.where(
+            games_df['WConference'] == games_df['LConference'],
+            games_df['WConference'],
+            'Final Four'
+        )
+        # Drop region columns as they are no longer needed
+        games_df = games_df.drop(['WConference', 'LConference'], axis=1)
+
+        regular_season = X[self.GAMES].loc[X[self.GAMES]['NCAA_Tournament']==False]
+        regular_season[['WSeed', 'LSeed', 'Round', 'Conference']] = np.nan
+
+        games_df = pd.concat([regular_season, games_df])
+
+        return games_df

@@ -3,13 +3,19 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from src.data_preparation.transformers import RankingTransformer, RollingStatsTransformer, RandomizeTeamsTransformer
+from transformers import (
+    RankingTransformer, 
+    RollingStatsTransformer, 
+    RandomizeTeamsTransformer,
+    TournamentSlotTransformer
+)
 from sklearn.pipeline import Pipeline
 
 feature_pipeline = Pipeline([
+    ('tournament_slots', TournamentSlotTransformer()),
     ('rankings', RankingTransformer(ranking_system='SEL', detailed_results=True)),
     ('rolling_stats', RollingStatsTransformer(n_games=5)),
-    ('randomize_teams', RandomizeTeamsTransformer())
+    ('randomize_teams', RandomizeTeamsTransformer()),
 ])
 
 if __name__ == '__main__':
