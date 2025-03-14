@@ -3,7 +3,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from transformers import (
+from src.data_preparation.transformers import (
     RankingTransformer, 
     RollingStatsTransformer, 
     RandomizeTeamsTransformer,
@@ -16,6 +16,10 @@ feature_pipeline = Pipeline([
     ('rankings', RankingTransformer(ranking_system='SEL', detailed_results=True)),
     ('rolling_stats', RollingStatsTransformer(n_games=5)),
     ('randomize_teams', RandomizeTeamsTransformer()),
+])
+
+tournament_pipeline = Pipeline([
+    ('tournament_slots', TournamentSlotTransformer())
 ])
 
 if __name__ == '__main__':
