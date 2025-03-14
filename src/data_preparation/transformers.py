@@ -214,10 +214,28 @@ class TournamentSlotTransformer(BaseEstimator, TransformerMixin):
         )
         # Drop region columns as they are no longer needed
         games_df = games_df.drop(['WConference', 'LConference'], axis=1)
+        games_df['bracket'] = np.nan
+
+
+
+        # Create a new column 'bracket' to identify the games in the bracket
+        for tournament_round in range(1, 5):
+            round_df = games_df.loc[games_df['Round'] == tournament_round,['Conference', 'WSeed', 'LSeed']]
+            if tournament_round == 1:
+                bracket_order = {1:8, 2:1, 3:3, 4:5, 5:6, 6:4, 7:2, 8:7}
+                games_df.loc[games_df['Round'] == tournament_round, 'bracket'] = round_df[['WSeed', 'LSeed']].min(axis=1).astype(int).map(bracket_order)
+            else:
+                previous_round = games_df.loc[games_df['Round'] == tournament_round - 1]
+                temp_merge_1 = pd.merge(round_df, previous_round[['Conference', 'WSeed', 'bracket']], left_on=['Conference','WSeed'], right_on=['Conference','WSeed']).rename(columns={'bracket': 'WBracket'})
+                round_df = pd.merge(temp_merge_1, previous_round[['Conference', 'WSeed', 'bracket']].rename(columns={'WSeed':'LSeed'}), left_on=['Conference','LSeed'], right_on=['Conference','LSeed']).rename(columns={'bracket': 'LBracket'})
+                round_df['bracket'] = round_df[['WBracket', 'LBracket']].min(axis=1)
+                games_df.loc[games_df['Round'] == tournament_round, 'bracket'] = round_df['bracket'].values
 
         regular_season = X[self.GAMES].loc[X[self.GAMES]['NCAA_Tournament']==False]
         regular_season[['WSeed', 'LSeed', 'Round', 'Conference']] = np.nan
 
         games_df = pd.concat([regular_season, games_df])
 
-        return games_df
+        X[self.GAMES] = games_df
+
+        return X
